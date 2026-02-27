@@ -1,12 +1,17 @@
 /// Connect Wallet Screen
 /// Create new wallet or import existing wallet
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:provider/provider.dart';
+
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/routes.dart';
 import '../../../core/constants/theme.dart';
+import '../../../providers/auth_provider.dart';
 import '../../../services/wallet_service.dart';
 
 class ConnectWalletScreen extends StatefulWidget {
@@ -38,11 +43,20 @@ class _ConnectWalletScreenState extends State<ConnectWalletScreen> {
       final wallet = await _walletService.generateNewWallet();
 
       if (mounted) {
+        // Link wallet address to Firebase user
+        await context.read<AuthProvider>().linkWallet(wallet.address);
+
         // Show mnemonic to user
         await _showMnemonicDialog(wallet.mnemonic!);
 
-        // Navigate to home
-        context.go(AppRoutes.home);
+        if (!mounted) return;
+        // Navigate to KYC if not yet submitted, otherwise home
+        final kycStatus = context.read<AuthProvider>().kycStatus;
+        if (kycStatus == null || kycStatus == AppConstants.kycStatusNone) {
+          context.go(AppRoutes.kycVerification);
+        } else {
+          context.go(AppRoutes.home);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -79,10 +93,22 @@ class _ConnectWalletScreenState extends State<ConnectWalletScreen> {
         await _walletService.importFromPrivateKey(privateKey);
       }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Wallet imported successfully!')),
-        );
+      if (!mounted) return;
+      // Link wallet address to Firebase user
+      final address = await _walletService.getWalletAddress();
+      if (address != null && mounted) {
+        await context.read<AuthProvider>().linkWallet(address);
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Wallet imported successfully!')),
+      );
+      // Navigate to KYC if not yet submitted, otherwise home
+      final kycStatus = context.read<AuthProvider>().kycStatus;
+      if (kycStatus == null || kycStatus == AppConstants.kycStatusNone) {
+        context.go(AppRoutes.kycVerification);
+      } else {
         context.go(AppRoutes.home);
       }
     } catch (e) {
@@ -252,11 +278,15 @@ class _ConnectWalletScreenState extends State<ConnectWalletScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Icon
-          Icon(
-            Icons.account_balance_wallet,
-            size: 80,
-            color: AppTheme.primaryColor,
+          // Logo
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/logo.jpeg',
+              width: 100,
+              height: 100,
+              fit: BoxFit.contain,
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -326,11 +356,15 @@ class _ConnectWalletScreenState extends State<ConnectWalletScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Icon
-          Icon(
-            Icons.download,
-            size: 64,
-            color: AppTheme.primaryColor,
+          // Logo
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/logo.jpeg',
+              width: 80,
+              height: 80,
+              fit: BoxFit.contain,
+            ),
           ),
           const SizedBox(height: 24),
 

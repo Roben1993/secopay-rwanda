@@ -1,11 +1,16 @@
 /// Register Screen
-/// New user registration with Firebase (to be implemented)
+/// New user registration with Firebase
+library;
 
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/routes.dart';
 import '../../../core/constants/theme.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -49,11 +54,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Implement Firebase registration
-      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
+      final authProvider = context.read<AuthProvider>();
+      await authProvider.register(
+        _emailController.text.trim(),
+        _passwordController.text,
+        _nameController.text.trim(),
+      );
 
       if (mounted) {
         context.go(AppRoutes.connectWallet);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthService.mapAuthError(e.code))),
+        );
       }
     } catch (e) {
       if (mounted) {

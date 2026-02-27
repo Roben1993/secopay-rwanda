@@ -1,0 +1,28 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // KYC documents: only owner can upload and read
+    match /kyc/{uid}/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Merchant documents: only owner can upload and read
+    match /merchants/{uid}/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Payment proofs: any authenticated user can upload and read
+    match /payment_proofs/{orderId}/{allPaths=**} {
+      allow write: if request.auth != null;
+      allow read: if request.auth != null;
+    }
+
+    // Dispute evidence: any authenticated user can upload and read
+    match /disputes/{disputeId}/{allPaths=**} {
+      allow write: if request.auth != null;
+      allow read: if request.auth != null;
+    }
+  }
+}

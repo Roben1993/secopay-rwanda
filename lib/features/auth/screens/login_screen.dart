@@ -1,11 +1,16 @@
 /// Login Screen
-/// User authentication with Firebase (to be implemented)
+/// User authentication with Firebase
+library;
 
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/routes.dart';
 import '../../../core/constants/theme.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -34,11 +39,20 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Implement Firebase authentication
-      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
+      final authProvider = context.read<AuthProvider>();
+      await authProvider.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
 
       if (mounted) {
         context.go(AppRoutes.connectWallet);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthService.mapAuthError(e.code))),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -51,6 +65,10 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _handleForgotPassword() {
+    context.push(AppRoutes.forgotPassword);
   }
 
   @override
@@ -145,9 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {
-                        // TODO: Navigate to forgot password
-                      },
+                      onPressed: _handleForgotPassword,
                       child: Text(
                         'Forgot Password?',
                         style: AppTheme.labelMedium.copyWith(

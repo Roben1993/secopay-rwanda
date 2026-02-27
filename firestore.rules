@@ -1,0 +1,150 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ========================================================================
+    // HELPERS
+    // ========================================================================
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+             request.auth.token.email in ['admin@escopay.com'];
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Check if caller is a participant in an escrow document
+    function isEscrowParticipant(escrowData) {
+      return isSignedIn() && (
+        request.auth.uid == escrowData.buyerUid ||
+        request.auth.uid == escrowData.sellerUid ||
+        request.auth.uid == escrowData.creatorUid
+      );
+    }
+
+    // ========================================================================
+    // USERS
+    // ========================================================================
+
+    match /users/{uid} {
+      allow read:   if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if false;
+    }
+
+    // ========================================================================
+    // ESCROWS
+    // ========================================================================
+
+    match /escrows/{docId} {
+      allow create: if isSignedIn();
+      allow read:   if isSignedIn() &&
+                       (isEscrowParticipant(resource.data) || isAdmin());
+      allow update: if isSignedIn() &&
+                       (isEscrowParticipant(resource.data) || isAdmin());
+      allow delete: if false;
+    }
+
+    // ========================================================================
+    // DISPUTES
+    // ========================================================================
+
+    match /disputes/{docId} {
+      allow create: if isSignedIn();
+      allow read:   if isSignedIn() &&
+                       (request.auth.uid == resource.data.raisedBy || isAdmin());
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ========================================================================
+    // CHATS
+    // ========================================================================
+
+    match /chats/{escrowId}/messages/{messageId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // ========================================================================
+    // NOTIFICATIONS
+    // ========================================================================
+
+    match /notifications/{notifId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && isAdmin();
+      allow delete: if false;
+    }
+
+    // ========================================================================
+    // RATINGS
+    // ========================================================================
+
+    match /ratings/{ratingId} {
+      allow read:           if isSignedIn();
+      allow create:         if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // ========================================================================
+    // P2P ADS
+    // ========================================================================
+
+    match /p2p_ads/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() &&
+                       (request.auth.uid == resource.data.creatorUid || isAdmin());
+      allow delete: if isSignedIn() &&
+                       (request.auth.uid == resource.data.creatorUid || isAdmin());
+    }
+
+    // ========================================================================
+    // P2P ORDERS
+    // ========================================================================
+
+    match /p2p_orders/{docId} {
+      allow create: if isSignedIn();
+      allow read:   if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    // ========================================================================
+    // P2P DISPUTES
+    // ========================================================================
+
+    match /p2p_disputes/{docId} {
+      allow create: if isSignedIn();
+      allow read:   if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ========================================================================
+    // MERCHANTS
+    // ========================================================================
+
+    match /merchants/{docId} {
+      allow create: if isSignedIn();
+      allow read:   if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ========================================================================
+    // COUNTERS (atomic ID generation)
+    // ========================================================================
+
+    match /counters/{counterId} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

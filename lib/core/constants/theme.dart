@@ -1,5 +1,6 @@
 /// App Theme Configuration
 /// Contains colors, text styles, and theme data for the entire app
+library;
 
 import 'package:flutter/material.dart';
 
@@ -10,46 +11,46 @@ class AppTheme {
   // COLOR PALETTE
   // ============================================================================
 
-  // Primary colors - Professional blue for trust and security
-  static const Color primaryColor = Color(0xFF1E88E5); // Vibrant blue
-  static const Color primaryLightColor = Color(0xFF6AB7FF);
-  static const Color primaryDarkColor = Color(0xFF005CB2);
+  // Primary colors - Deep Purple for modern crypto feel
+  static const Color primaryColor = Color(0xFF6C2BD9); // Deep purple
+  static const Color primaryLightColor = Color(0xFF9D6FEF);
+  static const Color primaryDarkColor = Color(0xFF4A1A9E);
 
-  // Secondary colors - Green for success/money
-  static const Color secondaryColor = Color(0xFF00C853); // Success green
+  // Secondary colors - Vibrant Green for money/success
+  static const Color secondaryColor = Color(0xFF00C853); // Vibrant green
   static const Color secondaryLightColor = Color(0xFF5EFC82);
   static const Color secondaryDarkColor = Color(0xFF009624);
 
-  // Accent color - Orange for actions
-  static const Color accentColor = Color(0xFFFF6F00); // Vibrant orange
-  static const Color accentLightColor = Color(0xFFFF9D3F);
-  static const Color accentDarkColor = Color(0xFFC43E00);
+  // Accent color - Emerald green for actions
+  static const Color accentColor = Color(0xFF00E676); // Bright green
+  static const Color accentLightColor = Color(0xFF66FFA6);
+  static const Color accentDarkColor = Color(0xFF00B248);
 
   // Background colors
-  static const Color backgroundColor = Color(0xFFF5F7FA);
+  static const Color backgroundColor = Color(0xFFF3F0F9); // Subtle purple tint
   static const Color surfaceColor = Color(0xFFFFFFFF);
   static const Color cardColor = Color(0xFFFFFFFF);
 
-  // Text colors
-  static const Color textPrimaryColor = Color(0xFF212121);
-  static const Color textSecondaryColor = Color(0xFF757575);
-  static const Color textHintColor = Color(0xFFBDBDBD);
-  static const Color textDisabledColor = Color(0xFFE0E0E0);
+  // Text colors - Rich black base
+  static const Color textPrimaryColor = Color(0xFF0F0F1A); // Rich black
+  static const Color textSecondaryColor = Color(0xFF5A5A6E);
+  static const Color textHintColor = Color(0xFFB0B0C0);
+  static const Color textDisabledColor = Color(0xFFD8D8E4);
 
   // Status colors
   static const Color successColor = Color(0xFF00C853);
-  static const Color warningColor = Color(0xFFFF6F00);
+  static const Color warningColor = Color(0xFFFF9800);
   static const Color errorColor = Color(0xFFE53935);
-  static const Color infoColor = Color(0xFF1E88E5);
+  static const Color infoColor = Color(0xFF7E57C2); // Purple-toned info
 
   // Escrow status colors
   static const Color statusCreatedColor = Color(0xFF9E9E9E); // Gray
-  static const Color statusFundedColor = Color(0xFF2196F3); // Blue
+  static const Color statusFundedColor = Color(0xFF7C3AED); // Purple
   static const Color statusShippedColor = Color(0xFFFF9800); // Orange
   static const Color statusDeliveredColor = Color(0xFF00BCD4); // Cyan
-  static const Color statusCompletedColor = Color(0xFF4CAF50); // Green
+  static const Color statusCompletedColor = Color(0xFF00C853); // Green
   static const Color statusDisputedColor = Color(0xFFF44336); // Red
-  static const Color statusCancelledColor = Color(0xFF616161); // Dark gray
+  static const Color statusCancelledColor = Color(0xFF3A3A4A); // Dark gray
 
   // Crypto-specific colors
   static const Color cryptoUSDTColor = Color(0xFF26A17B); // Tether green
@@ -57,13 +58,13 @@ class AppTheme {
   static const Color cryptoMaticColor = Color(0xFF8247E5); // Polygon purple
 
   // Divider and border colors
-  static const Color dividerColor = Color(0xFFE0E0E0);
-  static const Color borderColor = Color(0xFFBDBDBD);
+  static const Color dividerColor = Color(0xFFE0DFE8);
+  static const Color borderColor = Color(0xFFBBB8C9);
 
   // Overlay colors
   static const Color overlayColor = Color(0x80000000); // 50% black
-  static const Color shimmerBaseColor = Color(0xFFE0E0E0);
-  static const Color shimmerHighlightColor = Color(0xFFF5F5F5);
+  static const Color shimmerBaseColor = Color(0xFFE0DFE8);
+  static const Color shimmerHighlightColor = Color(0xFFF3F0F9);
 
   // ============================================================================
   // TEXT STYLES
@@ -323,7 +324,7 @@ class AppTheme {
 
     // Floating action button theme
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: accentColor,
+      backgroundColor: primaryColor,
       foregroundColor: Colors.white,
       elevation: 4,
     ),
@@ -400,10 +401,195 @@ class AppTheme {
   // DARK THEME (Optional - for future implementation)
   // ============================================================================
 
+  // Dark mode colors
+  static const Color darkBackground = Color(0xFF0F0F1A);
+  static const Color darkSurface = Color(0xFF1A1A2E);
+  static const Color darkCard = Color(0xFF222240);
+  static const Color darkDivider = Color(0xFF2E2E4A);
+  static const Color darkTextPrimary = Color(0xFFEAEAF0);
+  static const Color darkTextSecondary = Color(0xFF9A9AB0);
+
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    // TODO: Implement dark theme colors
+
+    // Color scheme
+    colorScheme: const ColorScheme.dark(
+      primary: primaryLightColor,
+      secondary: secondaryColor,
+      tertiary: accentColor,
+      surface: darkSurface,
+      error: errorColor,
+      onPrimary: darkBackground,
+      onSecondary: darkBackground,
+      onSurface: darkTextPrimary,
+      onError: Colors.white,
+    ),
+
+    // Scaffold background
+    scaffoldBackgroundColor: darkBackground,
+
+    // App bar theme
+    appBarTheme: const AppBarTheme(
+      backgroundColor: darkSurface,
+      foregroundColor: darkTextPrimary,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: darkTextPrimary,
+      ),
+      iconTheme: IconThemeData(color: darkTextPrimary),
+    ),
+
+    // Card theme
+    cardTheme: CardTheme(
+      color: darkCard,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    ),
+
+    // Button themes
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryLightColor,
+        foregroundColor: darkBackground,
+        elevation: 2,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        textStyle: buttonText,
+      ),
+    ),
+
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: primaryLightColor,
+        side: const BorderSide(color: primaryLightColor, width: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        textStyle: buttonText,
+      ),
+    ),
+
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: primaryLightColor,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        textStyle: buttonText,
+      ),
+    ),
+
+    // Input decoration theme
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: darkCard,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: darkDivider),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: darkDivider),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: primaryLightColor, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: errorColor),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: errorColor, width: 2),
+      ),
+      labelStyle: const TextStyle(color: darkTextSecondary),
+      hintStyle: const TextStyle(color: darkTextSecondary),
+      errorStyle: const TextStyle(color: errorColor),
+    ),
+
+    // Floating action button theme
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: primaryLightColor,
+      foregroundColor: darkBackground,
+      elevation: 4,
+    ),
+
+    // Bottom navigation bar theme
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: darkSurface,
+      selectedItemColor: primaryLightColor,
+      unselectedItemColor: darkTextSecondary,
+      showUnselectedLabels: true,
+      type: BottomNavigationBarType.fixed,
+      elevation: 8,
+    ),
+
+    // Divider theme
+    dividerTheme: const DividerThemeData(
+      color: darkDivider,
+      thickness: 1,
+      space: 1,
+    ),
+
+    // Icon theme
+    iconTheme: const IconThemeData(
+      color: darkTextPrimary,
+      size: 24,
+    ),
+
+    // Chip theme
+    chipTheme: ChipThemeData(
+      backgroundColor: darkCard,
+      selectedColor: primaryDarkColor,
+      labelStyle: labelMedium.copyWith(color: darkTextPrimary),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+
+    // Dialog theme
+    dialogTheme: DialogTheme(
+      backgroundColor: darkSurface,
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+
+    // Bottom sheet theme
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: darkSurface,
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+    ),
+
+    // Progress indicator theme
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: primaryLightColor,
+    ),
+
+    // Snackbar theme
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: darkCard,
+      contentTextStyle: const TextStyle(color: darkTextPrimary),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
   );
 
   // ============================================================================
@@ -534,5 +720,19 @@ class AppTheme {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [accentColor, accentDarkColor],
+  );
+
+  /// Purple-to-green gradient for premium elements
+  static LinearGradient purpleGreenGradient = const LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primaryColor, secondaryColor],
+  );
+
+  /// Dark gradient for headers and cards
+  static LinearGradient darkGradient = const LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
   );
 }

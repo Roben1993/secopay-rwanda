@@ -1,8 +1,8 @@
 /// Web3 Service
 /// Handles all blockchain interactions with Polygon network
 /// Manages USDT/USDC token operations and escrow contract interactions
+library;
 
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:web3dart/web3dart.dart';
@@ -381,7 +381,7 @@ class Web3Service {
 
           // Check confirmations
           final currentBlock = await getBlockNumber();
-          final confirmations = currentBlock - receipt.blockNumber.blockNum.toInt();
+          final confirmations = currentBlock - receipt.blockNumber.blockNum;
 
           if (confirmations >= requiredConfirmations) {
             return receipt;

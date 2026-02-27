@@ -1,8 +1,10 @@
 /// Wallet Service
 /// Handles wallet creation, import, and secure storage
 /// Manages private keys using flutter_secure_storage
+library;
 
 import 'dart:math';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:bip39/bip39.dart' as bip39;
@@ -10,20 +12,26 @@ import 'package:hex/hex.dart';
 import '../core/constants/app_constants.dart';
 
 class WalletService {
-  // Secure storage for private keys and mnemonic
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock,
-    ),
-  );
+  // Secure storage - use default options on web, platform-specific on mobile
+  late final FlutterSecureStorage _secureStorage;
 
   // Singleton pattern
   static final WalletService _instance = WalletService._internal();
   factory WalletService() => _instance;
-  WalletService._internal();
+  WalletService._internal() {
+    if (kIsWeb) {
+      _secureStorage = const FlutterSecureStorage();
+    } else {
+      _secureStorage = const FlutterSecureStorage(
+        aOptions: AndroidOptions(
+          encryptedSharedPreferences: true,
+        ),
+        iOptions: IOSOptions(
+          accessibility: KeychainAccessibility.first_unlock,
+        ),
+      );
+    }
+  }
 
   // ============================================================================
   // WALLET GENERATION

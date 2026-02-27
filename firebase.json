@@ -1,0 +1,43 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ],
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "escopay-7b5b7",
+          "appId": "1:114433562464:android:0d8c013be94374c139f005",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "escopay-7b5b7",
+          "configurations": {
+            "android": "1:114433562464:android:0d8c013be94374c139f005",
+            "ios": "1:114433562464:ios:bb241ccd716e7e2639f005"
+          }
+        }
+      }
+    }
+  }
+}

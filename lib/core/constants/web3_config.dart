@@ -1,5 +1,6 @@
 /// Web3 Configuration for Polygon Network
 /// Contains RPC URLs, Contract Addresses, and Network Configuration
+library;
 
 class Web3Config {
   Web3Config._(); // Private constructor to prevent instantiation
@@ -78,7 +79,7 @@ class Web3Config {
   // ============================================================================
 
   // Toggle this to switch between mainnet and testnet
-  static const bool isProduction = false; // Set to true for production release
+  static const bool isProduction = true; // Polygon Mainnet
 
   // Get current network configuration based on environment
   static String get rpcUrl => isProduction ? polygonMainnetRpcUrl : polygonMumbaiRpcUrl;

@@ -1,5 +1,6 @@
 /// App Routes Configuration
 /// Defines all route paths and names for navigation using go_router
+library;
 
 class AppRoutes {
   AppRoutes._(); // Private constructor
@@ -42,6 +43,8 @@ class AppRoutes {
   static const String walletDetails = '/wallet/details';
   static const String sendCrypto = '/wallet/send';
   static const String receiveCrypto = '/wallet/receive';
+  static const String swapCrypto = '/wallet/swap';
+  static const String buyCrypto = '/wallet/buy';
   static const String transactionHistory = '/wallet/transactions';
   static const String transactionDetail = '/wallet/transactions/:id';
 
@@ -76,6 +79,18 @@ class AppRoutes {
   // ============================================================================
 
   static const String notifications = '/notifications';
+
+  // ============================================================================
+  // P2P TRADING ROUTES
+  // ============================================================================
+
+  static const String p2pMarket = '/p2p';
+  static const String p2pCreateAd = '/p2p/create-ad';
+  static const String p2pBuy = '/p2p/buy';
+  static const String p2pOrderDetail = '/p2p/order';
+  static const String p2pMyAds = '/p2p/my-ads';
+  static const String p2pDispute = '/p2p/dispute';
+  static const String merchantApplication = '/p2p/merchant-apply';
 
   // ============================================================================
   // HELP & SUPPORT ROUTES
@@ -129,6 +144,21 @@ class AppRoutes {
   /// Get dispute detail route with ID
   static String getDisputeDetailRoute(String disputeId) {
     return '/disputes/$disputeId';
+  }
+
+  /// Get P2P buy route with ad ID
+  static String getP2PBuyRoute(String adId) {
+    return '/p2p/buy?adId=$adId';
+  }
+
+  /// Get P2P order detail route with order ID
+  static String getP2POrderRoute(String orderId) {
+    return '/p2p/order?orderId=$orderId';
+  }
+
+  /// Get P2P dispute route with order ID
+  static String getP2PDisputeRoute(String orderId) {
+    return '/p2p/dispute?orderId=$orderId';
   }
 }
 
@@ -184,6 +214,15 @@ class RouteNames {
   static const String disputeList = 'Disputes';
   static const String createDispute = 'Create Dispute';
   static const String disputeDetail = 'Dispute Detail';
+
+  // P2P Trading
+  static const String p2pMarket = 'P2P Market';
+  static const String p2pCreateAd = 'Create P2P Ad';
+  static const String p2pBuy = 'P2P Buy';
+  static const String p2pOrderDetail = 'P2P Order Detail';
+  static const String p2pMyAds = 'My P2P Ads';
+  static const String p2pDispute = 'P2P Dispute';
+  static const String merchantApplication = 'Merchant Application';
 
   // Other
   static const String notifications = 'Notifications';
