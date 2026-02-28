@@ -3,7 +3,11 @@
 /// Manages private keys using flutter_secure_storage
 library;
 
+import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
+import 'package:crypto/crypto.dart';
+import 'package:encrypt/encrypt.dart' as enc;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web3dart/web3dart.dart';
@@ -304,36 +308,46 @@ class WalletService {
   }
 
   // ============================================================================
-  // ENCRYPTION (Simple XOR - Replace with proper encryption in production!)
+  // ENCRYPTION (AES-256-CBC with random IV)
   // ============================================================================
 
-  /// Simple XOR encryption (IMPORTANT: Use proper encryption like AES in production!)
-  String _encryptData(String data, String key) {
-    // TODO: Replace with proper AES encryption
-    // This is a placeholder - DO NOT use in production
-    final keyBytes = key.codeUnits;
-    final dataBytes = data.codeUnits;
-    final encrypted = <int>[];
+  /// AES-256-CBC encryption with a random IV derived from a password
+  String _encryptData(String data, String password) {
+    // Derive a 32-byte key from password using SHA-256
+    final keyBytes = Uint8List.fromList(
+      sha256.convert(utf8.encode(password)).bytes,
+    );
+    final key = enc.Key(keyBytes);
 
-    for (int i = 0; i < dataBytes.length; i++) {
-      encrypted.add(dataBytes[i] ^ keyBytes[i % keyBytes.length]);
-    }
+    // Generate a cryptographically secure random 16-byte IV
+    final random = Random.secure();
+    final ivBytes = Uint8List.fromList(
+      List<int>.generate(16, (_) => random.nextInt(256)),
+    );
+    final iv = enc.IV(ivBytes);
 
-    return HEX.encode(encrypted);
+    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
+    final encrypted = encrypter.encrypt(data, iv: iv);
+
+    // Store as base64(iv):base64(ciphertext)
+    return '${iv.base64}:${encrypted.base64}';
   }
 
-  /// Simple XOR decryption
-  String _decryptData(String encryptedHex, String key) {
-    // TODO: Replace with proper AES decryption
-    final keyBytes = key.codeUnits;
-    final encrypted = HEX.decode(encryptedHex);
-    final decrypted = <int>[];
-
-    for (int i = 0; i < encrypted.length; i++) {
-      decrypted.add(encrypted[i] ^ keyBytes[i % keyBytes.length]);
+  /// AES-256-CBC decryption
+  String _decryptData(String encryptedData, String password) {
+    final parts = encryptedData.split(':');
+    if (parts.length != 2) {
+      throw WalletException('Invalid encrypted data format');
     }
 
-    return String.fromCharCodes(decrypted);
+    final iv = enc.IV.fromBase64(parts[0]);
+    final keyBytes = Uint8List.fromList(
+      sha256.convert(utf8.encode(password)).bytes,
+    );
+    final key = enc.Key(keyBytes);
+
+    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
+    return encrypter.decrypt64(parts[1], iv: iv);
   }
 
   // ============================================================================

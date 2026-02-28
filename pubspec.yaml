@@ -93,8 +93,9 @@ dependencies:
   # Biometric Authentication
   local_auth: ^2.3.0
 
-  # Cryptographic Hashing
+  # Cryptographic Hashing & Encryption
   crypto: ^3.0.6
+  encrypt: ^5.0.3
 
 dev_dependencies:
   flutter_test:

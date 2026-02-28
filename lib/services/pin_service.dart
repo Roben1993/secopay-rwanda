@@ -3,6 +3,7 @@
 library;
 
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -31,15 +32,21 @@ class PinService {
     }
   }
 
-  /// Hash a PIN with salt using SHA-256
+  /// Hash a PIN with salt using iterated SHA-256 (10,000 rounds)
   String _hashPin(String pin, String salt) {
-    final bytes = utf8.encode('$salt:$pin');
+    var bytes = utf8.encode('$salt:$pin');
+    // Stretch with 10,000 rounds to slow down brute-force attacks
+    for (int i = 0; i < 10000; i++) {
+      bytes = sha256.convert(bytes).bytes;
+    }
     return sha256.convert(bytes).toString();
   }
 
-  /// Generate a simple salt from current time
+  /// Generate a cryptographically secure random 32-byte salt
   String _generateSalt() {
-    return DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+    final random = Random.secure();
+    final saltBytes = List<int>.generate(32, (_) => random.nextInt(256));
+    return base64Encode(saltBytes);
   }
 
   /// Check if a PIN has been set

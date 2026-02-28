@@ -2,9 +2,12 @@
 /// Display wallet balances, quick actions, and transaction history
 library;
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../core/constants/routes.dart';
 import '../../../core/constants/theme.dart';
@@ -29,9 +32,10 @@ class _WalletScreenState extends State<WalletScreen> {
   double _usdtBalance = 0.0;
   double _usdcBalance = 0.0;
   double _maticBalance = 0.0;
+  double _maticPrice = 0.0;
   bool _balancesLoading = false;
 
-  double get _totalUSD => _usdtBalance + _usdcBalance + (_maticBalance * 0.52);
+  double get _totalUSD => _usdtBalance + _usdcBalance + (_maticBalance * _maticPrice);
 
   @override
   void initState() {
@@ -52,12 +56,18 @@ class _WalletScreenState extends State<WalletScreen> {
       if (address != null && address.isNotEmpty) {
         setState(() => _balancesLoading = true);
         try {
-          final balances = await Web3Service().getAllBalances(address);
+          final results = await Future.wait([
+            Web3Service().getAllBalances(address),
+            _fetchMaticPrice(),
+          ]);
+          final balances = results[0] as WalletBalances;
+          final maticPrice = results[1] as double;
           if (mounted) {
             setState(() {
               _usdtBalance = balances.usdt;
               _usdcBalance = balances.usdc;
               _maticBalance = balances.matic;
+              _maticPrice = maticPrice;
               _balancesLoading = false;
             });
           }
@@ -68,6 +78,21 @@ class _WalletScreenState extends State<WalletScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
     }
+  }
+
+  Future<double> _fetchMaticPrice() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd',
+        ),
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return (data['matic-network']?['usd'] as num?)?.toDouble() ?? 0.0;
+      }
+    } catch (_) {}
+    return 0.0;
   }
 
   void _copyAddress() {
@@ -377,7 +402,7 @@ class _WalletScreenState extends State<WalletScreen> {
             symbol: 'MATIC',
             name: 'Polygon',
             balance: _maticBalance,
-            usdValue: _maticBalance * 0.52,
+            usdValue: _maticBalance * _maticPrice,
             color: AppTheme.cryptoMaticColor,
             icon: Icons.hexagon_outlined,
           ),

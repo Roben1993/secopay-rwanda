@@ -1014,14 +1014,9 @@ class AppConstants {
   static const String pawaPaySandboxUrl = 'https://api.sandbox.pawapay.io';
   static const String pawaPayProductionUrl = 'https://api.pawapay.io';
 
-  // API token — move to secure env config before production
-  static const String pawaPayApiKey =
-      'eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ'
-      '.eyJ0dCI6IkFBVCIsInN1YiI6IjgzOCIsIm1hdiI6IjEiLCJleHAiOjIwODc0NzQy'
-      'MjAsImlhdCI6MTc3MTk0MTQyMCwicG0iOiJEQUYsUEFGIiwianRpIjoiOGE1ODM2NG'
-      'UtZGVlMi00OGIxLWFhMTYtM2VjZGFmYTAwZjhmIn0'
-      '.miaWbtTid6RvWZMYStX8uyJWqmHHpVuRgKfdP5EdvEHjQTrEp2GbNKj65Z1zE10e'
-      'TyffJJSn2mW2C2GCYqfvkw';
+  // API token — pass via --dart-define=PAWAPAY_API_KEY=your_token at build time
+  // Never hardcode this value here
+  static const String pawaPayApiKey = String.fromEnvironment('PAWAPAY_API_KEY', defaultValue: '');
 
   // Rwanda MTN Mobile Money (default)
   static const String pawaPayProvider = 'MTN_MOMO_RWA';

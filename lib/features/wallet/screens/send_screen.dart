@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:web3dart/web3dart.dart';
 
 import '../../../core/constants/theme.dart';
 import '../../../services/wallet_service.dart';
@@ -363,7 +364,20 @@ class _SendScreenState extends State<SendScreen> {
                         if (value == null || value.trim().isEmpty) {
                           return 'Please enter recipient address';
                         }
-                        if (!value.trim().startsWith('0x') || value.trim().length != 42) {
+                        final addr = value.trim();
+                        if (!addr.startsWith('0x') || addr.length != 42) {
+                          return 'Invalid Ethereum address';
+                        }
+                        // EIP-55 checksum validation — catches typos in mixed-case addresses
+                        try {
+                          final ethAddr = EthereumAddress.fromHex(addr);
+                          final checksummed = ethAddr.hexEip55;
+                          final isAllLower = addr == addr.toLowerCase();
+                          final isAllUpper = addr.substring(2) == addr.substring(2).toUpperCase();
+                          if (!isAllLower && !isAllUpper && addr != checksummed) {
+                            return 'Address checksum invalid — possible typo';
+                          }
+                        } catch (_) {
                           return 'Invalid Ethereum address';
                         }
                         return null;

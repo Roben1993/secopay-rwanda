@@ -13,16 +13,16 @@ service firebase.storage {
       allow read: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Payment proofs: any authenticated user can upload and read
-    match /payment_proofs/{orderId}/{allPaths=**} {
-      allow write: if request.auth != null;
-      allow read: if request.auth != null;
+    // Payment proofs: only the uploading user (by uid subfolder) can write
+    match /payment_proofs/{uid}/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read:  if request.auth != null;
     }
 
-    // Dispute evidence: any authenticated user can upload and read
-    match /disputes/{disputeId}/{allPaths=**} {
-      allow write: if request.auth != null;
-      allow read: if request.auth != null;
+    // Dispute evidence: only the uploading user (by uid subfolder) can write
+    match /disputes/{uid}/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read:  if request.auth != null;
     }
   }
 }

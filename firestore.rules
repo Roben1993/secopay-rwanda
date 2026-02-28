@@ -69,7 +69,10 @@ service cloud.firestore {
     // ========================================================================
 
     match /chats/{escrowId}/messages/{messageId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if isSignedIn() &&
+        isEscrowParticipant(
+          get(/databases/$(database)/documents/escrows/$(escrowId)).data
+        );
     }
 
     // ========================================================================
@@ -112,8 +115,16 @@ service cloud.firestore {
 
     match /p2p_orders/{docId} {
       allow create: if isSignedIn();
-      allow read:   if isSignedIn();
-      allow update: if isSignedIn();
+      allow read:   if isSignedIn() && (
+                       request.auth.uid == resource.data.buyerUid ||
+                       request.auth.uid == resource.data.sellerUid ||
+                       isAdmin()
+                    );
+      allow update: if isSignedIn() && (
+                       request.auth.uid == resource.data.buyerUid ||
+                       request.auth.uid == resource.data.sellerUid ||
+                       isAdmin()
+                    );
       allow delete: if false;
     }
 
@@ -144,7 +155,8 @@ service cloud.firestore {
     // ========================================================================
 
     match /counters/{counterId} {
-      allow read, write: if isSignedIn();
+      allow read:  if isSignedIn();
+      allow write: if isAdmin();
     }
   }
 }
