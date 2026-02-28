@@ -95,6 +95,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       actions: [
         IconButton(
+          icon: const Icon(Icons.edit_outlined),
+          tooltip: 'Edit Profile',
+          onPressed: () => context.push(AppRoutes.editProfile),
+        ),
+        IconButton(
           icon: const Icon(Icons.qr_code),
           onPressed: () => context.push(AppRoutes.receiveCrypto),
         ),
@@ -401,7 +406,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Transaction History',
                   subtitle: 'Past escrows & transfers',
                   color: AppTheme.cryptoMaticColor,
-                  onTap: () {},
+                  onTap: () => context.push(AppRoutes.transactionHistory),
                 ),
               ],
             ),
@@ -441,7 +446,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Help & FAQ',
                   subtitle: 'Get answers to common questions',
                   color: AppTheme.infoColor,
-                  onTap: () {},
+                  onTap: () => context.push(AppRoutes.help),
                 ),
                 _buildDivider(),
                 _buildMenuItem(
@@ -449,7 +454,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Contact Support',
                   subtitle: AppConstants.supportEmail,
                   color: AppTheme.successColor,
-                  onTap: () {},
+                  onTap: () => context.push(AppRoutes.help),
                 ),
                 _buildDivider(),
                 _buildMenuItem(
@@ -457,7 +462,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Terms of Service',
                   subtitle: 'Review our terms',
                   color: Colors.grey[600]!,
-                  onTap: () {},
+                  onTap: () => context.push(AppRoutes.termsOfService),
                 ),
                 _buildDivider(),
                 _buildMenuItem(
@@ -465,7 +470,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Privacy Policy',
                   subtitle: 'How we protect your data',
                   color: Colors.grey[600]!,
-                  onTap: () {},
+                  onTap: () => context.push(AppRoutes.privacyPolicy),
                 ),
               ],
             ),

@@ -287,6 +287,25 @@ class AuthService {
     return null;
   }
 
+  /// Update the user's display name in Firebase Auth and Firestore.
+  Future<void> updateDisplayName(String name) async {
+    if (_useFirebase) {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('Not authenticated');
+      await user.updateDisplayName(name);
+      await _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(user.uid)
+          .update({'displayName': name});
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_localNameKey, name);
+    }
+    if (AppConstants.enableLogging) {
+      debugPrint('[AuthService] Updated display name: $name');
+    }
+  }
+
   /// Save the user's phone number to their Firestore profile.
   /// Called when the user creates or participates in a fiat escrow.
   Future<void> savePhoneNumber(String phone) async {

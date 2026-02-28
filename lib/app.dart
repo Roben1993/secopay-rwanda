@@ -41,6 +41,10 @@ import 'features/p2p/screens/p2p_order_detail_screen.dart';
 import 'features/p2p/screens/p2p_dispute_screen.dart';
 import 'features/p2p/screens/merchant_application_screen.dart';
 import 'features/notifications/screens/notifications_screen.dart';
+import 'features/home/screens/onboarding_screen.dart';
+import 'features/profile/screens/edit_profile_screen.dart';
+import 'features/profile/screens/help_screen.dart';
+import 'features/wallet/screens/transaction_history_screen.dart';
 
 class EscrowApp extends StatelessWidget {
   const EscrowApp({super.key});
@@ -90,6 +94,11 @@ final GoRouter _router = GoRouter(
       path: AppRoutes.splash,
       name: 'Splash',
       builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.onboarding,
+      name: 'Onboarding',
+      builder: (context, state) => const OnboardingScreen(),
     ),
 
     // ==========================================================================
@@ -301,6 +310,44 @@ final GoRouter _router = GoRouter(
       name: 'KYC Verification',
       builder: (context, state) => const KycScreen(),
     ),
+    GoRoute(
+      path: AppRoutes.editProfile,
+      name: 'Edit Profile',
+      builder: (context, state) => const EditProfileScreen(),
+    ),
+
+    // ==========================================================================
+    // TRANSACTION HISTORY
+    // ==========================================================================
+    GoRoute(
+      path: AppRoutes.transactionHistory,
+      name: 'Transaction History',
+      builder: (context, state) => const TransactionHistoryScreen(),
+    ),
+
+    // ==========================================================================
+    // HELP & SUPPORT ROUTES
+    // ==========================================================================
+    GoRoute(
+      path: AppRoutes.help,
+      name: 'Help',
+      builder: (context, state) => const HelpScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.faq,
+      name: 'FAQ',
+      builder: (context, state) => const FaqScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.termsOfService,
+      name: 'Terms of Service',
+      builder: (context, state) => const TermsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.privacyPolicy,
+      name: 'Privacy Policy',
+      builder: (context, state) => const PrivacyScreen(),
+    ),
   ],
 
   // ============================================================================
@@ -360,6 +407,7 @@ final GoRouter _router = GoRouter(
     // List of public routes (don't require authentication)
     final publicRoutes = [
       AppRoutes.splash,
+      AppRoutes.onboarding,
       AppRoutes.login,
       AppRoutes.register,
       AppRoutes.forgotPassword,

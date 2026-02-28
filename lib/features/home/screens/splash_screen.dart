@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:provider/provider.dart';
 
@@ -75,8 +76,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       if (!mounted) return;
 
       if (!isAuthenticated) {
-        // Not logged in, go to login
-        context.go(AppRoutes.login);
+        // Check if first-time user (show onboarding)
+        final prefs = await SharedPreferences.getInstance();
+        final onboardingDone = prefs.getBool('onboarding_done') ?? false;
+        if (!mounted) return;
+        context.go(onboardingDone ? AppRoutes.login : AppRoutes.onboarding);
         return;
       }
 
