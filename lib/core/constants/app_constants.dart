@@ -1011,8 +1011,8 @@ class AppConstants {
   // PAWAPAY CONFIGURATION
   // ============================================================================
 
-  static const String pawaPaySandboxUrl = 'https://api.sandbox.pawapay.io';
-  static const String pawaPayProductionUrl = 'https://api.pawapay.io';
+  static const String pawaPaySandboxUrl = 'https://api.sandbox.pawapay.cloud';
+  static const String pawaPayProductionUrl = 'https://api.pawapay.cloud';
 
   // API token — pass via --dart-define=PAWAPAY_API_KEY=your_token at build time
   // Never hardcode this value here

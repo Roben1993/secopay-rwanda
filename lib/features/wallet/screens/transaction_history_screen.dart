@@ -2,6 +2,7 @@
 /// Shows past escrows and on-chain crypto transfers
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -52,9 +53,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
       List<EscrowModel> escrows = [];
 
       if (auth.uid != null) {
-        escrows = await _escrowService.getUserEscrows(uid: auth.uid!);
+        escrows = await _escrowService.getUserEscrowsByUid(auth.uid!);
       } else if (address != null) {
-        escrows = await _escrowService.getUserEscrows(walletAddress: address);
+        escrows = await _escrowService.getUserEscrows(address);
       }
 
       if (mounted) {
@@ -149,20 +150,20 @@ class _EscrowTile extends StatelessWidget {
 
   Color get _statusColor {
     switch (escrow.status) {
-      case 'completed': return AppTheme.successColor;
-      case 'cancelled': return AppTheme.errorColor;
-      case 'disputed': return AppTheme.warningColor;
-      case 'funded': return AppTheme.primaryColor;
+      case EscrowStatus.completed: return AppTheme.successColor;
+      case EscrowStatus.cancelled: return AppTheme.errorColor;
+      case EscrowStatus.disputed:  return AppTheme.warningColor;
+      case EscrowStatus.funded:    return AppTheme.primaryColor;
       default: return Colors.grey;
     }
   }
 
   IconData get _statusIcon {
     switch (escrow.status) {
-      case 'completed': return Icons.check_circle_rounded;
-      case 'cancelled': return Icons.cancel_rounded;
-      case 'disputed': return Icons.warning_amber_rounded;
-      case 'funded': return Icons.lock_rounded;
+      case EscrowStatus.completed: return Icons.check_circle_rounded;
+      case EscrowStatus.cancelled: return Icons.cancel_rounded;
+      case EscrowStatus.disputed:  return Icons.warning_amber_rounded;
+      case EscrowStatus.funded:    return Icons.lock_rounded;
       default: return Icons.hourglass_empty_rounded;
     }
   }
@@ -210,7 +211,7 @@ class _EscrowTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${escrow.amount.toStringAsFixed(2)} ${escrow.token}',
+                  '${escrow.amount.toStringAsFixed(2)} ${escrow.paymentType == 'fiat' ? (escrow.fiatCurrency ?? escrow.tokenSymbol) : escrow.tokenSymbol}',
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 3),
@@ -221,7 +222,7 @@ class _EscrowTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    escrow.status[0].toUpperCase() + escrow.status.substring(1),
+                    escrow.status.name[0].toUpperCase() + escrow.status.name.substring(1),
                     style: TextStyle(fontSize: 11, color: _statusColor, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -282,12 +283,8 @@ class _TransferHistoryState extends State<_TransferHistory> {
       '&sort=desc&offset=20&page=1',
     );
 
-    final response = await uri.toString().let((url) async {
-      final client = Uri.parse(url);
-      // We'll use http package from dart:io via http import in wallet_screen
-      return null; // placeholder
-    });
-
+    // Transfers shown via Polygonscan link; on-chain fetch not yet implemented.
+    debugPrint('[TxHistory] Polygonscan fetch skipped for $address');
     return [];
   }
 
@@ -467,6 +464,3 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-extension _StringLet on String {
-  T let<T>(T Function(String) fn) => fn(this);
-}

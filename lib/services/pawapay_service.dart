@@ -1,6 +1,6 @@
 /// PawaPay Service
-/// Handles mobile money deposits via PawaPay API
-/// Supports MTN Mobile Money in Rwanda (MTN_MOMO_RWA)
+/// Handles mobile money deposits and payouts via PawaPay API
+/// Supports 19 African countries / 15+ providers
 library;
 
 import 'dart:async';
@@ -36,73 +36,90 @@ class PawaPayService {
         'Authorization': 'Bearer $_apiKey',
       };
 
+  // Truncate + sanitize to ≤ 22 chars, alphanumeric + spaces + hyphens only
+  static String _desc(String raw) {
+    final clean = raw.replaceAll(RegExp(r'[^a-zA-Z0-9 \-]'), ' ');
+    return clean.length > 22 ? clean.substring(0, 22) : clean;
+  }
+
+  // Parse the deposit/payout failureReason field, which can be null, String, or Map
+  static String? _failureMsg(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is String) return raw;
+    if (raw is Map) return raw['failureMessage'] as String? ?? raw['failureCode'] as String?;
+    return null;
+  }
+
+  // PawaPay status check responses are JSON arrays — extract first element
+  static Map<String, dynamic> _extractFirst(dynamic decoded, {required String fallbackId, required String idField}) {
+    if (decoded is List && decoded.isNotEmpty) {
+      return decoded.first as Map<String, dynamic>;
+    }
+    if (decoded is Map<String, dynamic>) {
+      if (decoded.containsKey('data') && decoded['data'] is Map) {
+        return decoded['data'] as Map<String, dynamic>;
+      }
+      return decoded;
+    }
+    return {idField: fallbackId, 'status': 'UNKNOWN'};
+  }
+
   // ============================================================================
   // DEPOSIT (Collect money from customer)
   // ============================================================================
 
-  /// Initiate a mobile money deposit from a customer.
-  /// Returns a [PawaPayDepositResult] with the deposit ID and initial status.
+  /// Initiate a mobile money deposit (collect from customer).
   ///
-  /// [phoneNumber] - Customer phone in format 250XXXXXXXXX (no +)
-  /// [amount] - Amount in RWF
-  /// [provider] - Mobile money provider (default: MTN_MOMO_RWA)
+  /// [phoneNumber] — digits only, e.g. 250788123456
+  /// [amount]      — in the currency's minor units (RWF = integers, e.g. 1500)
+  /// [correspondent] — PawaPay correspondent code, e.g. MTN_MOMO_RWA
+  /// [currency]    — ISO 4217 code, e.g. RWF
   Future<PawaPayDepositResult> initDeposit({
     required String phoneNumber,
     required double amount,
-    String provider = AppConstants.pawaPayProvider,
+    String correspondent = AppConstants.pawaPayProvider,
     String currency = AppConstants.pawaPayCurrency,
+    String description = 'Escrow deposit',
+    // legacy alias still accepted
+    String? provider,
   }) async {
     final depositId = _uuid.v4();
-
-    // Clean phone number - remove +, spaces, dashes
     final cleanPhone = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    final correspondent0 = provider ?? correspondent;
 
     final body = jsonEncode({
       'depositId': depositId,
       'amount': amount.toStringAsFixed(0),
       'currency': currency,
+      'correspondent': correspondent0,
       'payer': {
-        'type': 'MMO',
-        'accountDetails': {
-          'phoneNumber': cleanPhone,
-          'provider': provider,
-        },
+        'type': 'MSISDN',
+        'address': {'value': cleanPhone},
       },
+      'customerTimestamp': DateTime.now().toUtc().toIso8601String(),
+      'statementDescription': _desc(description),
     });
 
-    if (AppConstants.enableLogging) {
-      debugPrint('PawaPay: Initiating deposit $depositId');
-      debugPrint('PawaPay: Phone=$cleanPhone Amount=$amount $currency');
-    }
+    debugPrint('[PawaPay] initDeposit $depositId → $cleanPhone $amount $currency via $correspondent0');
 
     try {
       final response = await http
-          .post(
-            Uri.parse('$_baseUrl/v2/deposits'),
-            headers: _headers,
-            body: body,
-          )
+          .post(Uri.parse('$_baseUrl/deposits'), headers: _headers, body: body)
           .timeout(const Duration(seconds: 30));
 
-      if (AppConstants.enableLogging) {
-        debugPrint('PawaPay: Response ${response.statusCode}: ${response.body}');
-      }
+      debugPrint('[PawaPay] deposit response ${response.statusCode}: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final decoded = jsonDecode(response.body);
+        final data = _extractFirst(decoded, fallbackId: depositId, idField: 'depositId');
         return PawaPayDepositResult(
           depositId: data['depositId'] as String? ?? depositId,
-          status: data['status'] as String? ?? 'UNKNOWN',
+          status: data['status'] as String? ?? 'ACCEPTED',
           created: data['created'] as String?,
-          failureReason: data['failureReason'] != null
-              ? (data['failureReason'] as Map<String, dynamic>)['failureMessage'] as String?
-              : null,
+          failureReason: _failureMsg(data['failureReason']),
         );
       } else {
-        final errorBody = response.body;
-        throw PawaPayException(
-          'Deposit failed (HTTP ${response.statusCode}): $errorBody',
-        );
+        throw PawaPayException('Deposit failed (HTTP ${response.statusCode}): ${response.body}');
       }
     } on TimeoutException {
       throw PawaPayException('Request timed out. Please try again.');
@@ -113,39 +130,28 @@ class PawaPayService {
   }
 
   // ============================================================================
-  // CHECK STATUS
+  // CHECK DEPOSIT STATUS
   // ============================================================================
 
-  /// Check the status of a deposit by its ID.
+  /// Check the status of a deposit.
+  /// PawaPay returns a JSON array — we always take the first element.
   Future<PawaPayDepositResult> checkDepositStatus(String depositId) async {
     try {
       final response = await http
-          .get(
-            Uri.parse('$_baseUrl/v2/deposits/$depositId'),
-            headers: _headers,
-          )
+          .get(Uri.parse('$_baseUrl/deposits/$depositId'), headers: _headers)
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-
-        // The status check response wraps data differently
-        final depositData = data.containsKey('data')
-            ? data['data'] as Map<String, dynamic>
-            : data;
-
+        final decoded = jsonDecode(response.body);
+        final data = _extractFirst(decoded, fallbackId: depositId, idField: 'depositId');
         return PawaPayDepositResult(
-          depositId: depositData['depositId'] as String? ?? depositId,
-          status: depositData['status'] as String? ?? 'UNKNOWN',
-          created: depositData['created'] as String?,
-          failureReason: depositData['failureReason'] != null
-              ? (depositData['failureReason'] as Map<String, dynamic>)['failureMessage'] as String?
-              : null,
+          depositId: data['depositId'] as String? ?? depositId,
+          status: data['status'] as String? ?? 'UNKNOWN',
+          created: data['created'] as String?,
+          failureReason: _failureMsg(data['failureReason']),
         );
       } else {
-        throw PawaPayException(
-          'Status check failed (HTTP ${response.statusCode})',
-        );
+        throw PawaPayException('Status check failed (HTTP ${response.statusCode})');
       }
     } on TimeoutException {
       throw PawaPayException('Status check timed out.');
@@ -156,41 +162,29 @@ class PawaPayService {
   }
 
   // ============================================================================
-  // POLL UNTIL COMPLETE
+  // POLL UNTIL COMPLETE (Deposit)
   // ============================================================================
 
-  /// Poll the deposit status until it reaches a final state.
-  /// Returns the final [PawaPayDepositResult].
-  ///
-  /// [onStatusUpdate] is called each time the status is checked.
   Future<PawaPayDepositResult> pollUntilComplete(
     String depositId, {
     Duration interval = const Duration(seconds: 3),
-    Duration timeout = const Duration(minutes: 2),
+    Duration timeout = const Duration(minutes: 3),
     void Function(String status)? onStatusUpdate,
   }) async {
     final deadline = DateTime.now().add(timeout);
 
     while (DateTime.now().isBefore(deadline)) {
       await Future.delayed(interval);
-
       try {
         final result = await checkDepositStatus(depositId);
-
         onStatusUpdate?.call(result.status);
-
-        if (result.isFinal) {
-          return result;
-        }
-      } catch (e) {
-        if (AppConstants.enableLogging) {
-          debugPrint('PawaPay: Poll error (retrying): $e');
-        }
-        // Continue polling on transient errors
+        if (result.isFinal) return result;
+      } catch (_) {
+        // transient error — keep polling
       }
     }
 
-    throw PawaPayException('Payment timed out. Check your phone for the confirmation prompt.');
+    throw PawaPayException('Payment timed out. Please check your phone and try again.');
   }
 
   // ============================================================================
@@ -201,55 +195,49 @@ class PawaPayService {
   Future<PawaPayPayoutResult> initPayout({
     required String phoneNumber,
     required double amount,
-    required String provider,
+    String correspondent = '',
     required String currency,
+    String description = 'Escrow payout',
     String? clientReference,
+    // legacy alias — if provided, takes precedence over correspondent
+    String? provider,
     String? customerMessage,
   }) async {
     final payoutId = _uuid.v4();
     final cleanPhone = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    final correspondent0 = (provider != null && provider.isNotEmpty) ? provider : correspondent;
 
     final body = jsonEncode({
       'payoutId': payoutId,
       'amount': amount.toStringAsFixed(0),
       'currency': currency,
+      'correspondent': correspondent0,
       'recipient': {
-        'type': 'MMO',
-        'accountDetails': {
-          'phoneNumber': cleanPhone,
-          'provider': provider,
-        },
+        'type': 'MSISDN',
+        'address': {'value': cleanPhone},
       },
+      'customerTimestamp': DateTime.now().toUtc().toIso8601String(),
+      'statementDescription': _desc(description),
       if (clientReference != null) 'clientReferenceId': clientReference,
-      if (customerMessage != null) 'customerMessage': customerMessage,
     });
 
-    if (AppConstants.enableLogging) {
-      debugPrint('PawaPay: Initiating payout $payoutId → $cleanPhone');
-    }
+    debugPrint('[PawaPay] initPayout $payoutId → $cleanPhone $amount $currency via $correspondent0');
 
     try {
       final response = await http
-          .post(
-            Uri.parse('$_baseUrl/v2/payouts'),
-            headers: _headers,
-            body: body,
-          )
+          .post(Uri.parse('$_baseUrl/payouts'), headers: _headers, body: body)
           .timeout(const Duration(seconds: 30));
 
-      if (AppConstants.enableLogging) {
-        debugPrint('PawaPay payout: ${response.statusCode}: ${response.body}');
-      }
+      debugPrint('[PawaPay] payout response ${response.statusCode}: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final decoded = jsonDecode(response.body);
+        final data = _extractFirst(decoded, fallbackId: payoutId, idField: 'payoutId');
         return PawaPayPayoutResult(
           payoutId: data['payoutId'] as String? ?? payoutId,
-          status: data['status'] as String? ?? 'UNKNOWN',
+          status: data['status'] as String? ?? 'ACCEPTED',
           created: data['created'] as String?,
-          failureReason: data['failureReason'] != null
-              ? (data['failureReason'] as Map<String, dynamic>)['failureMessage'] as String?
-              : null,
+          failureReason: _failureMsg(data['failureReason']),
         );
       } else {
         throw PawaPayException('Payout failed (HTTP ${response.statusCode}): ${response.body}');
@@ -262,28 +250,24 @@ class PawaPayService {
     }
   }
 
-  /// Check the status of a payout by its ID.
+  // ============================================================================
+  // CHECK PAYOUT STATUS
+  // ============================================================================
+
   Future<PawaPayPayoutResult> checkPayoutStatus(String payoutId) async {
     try {
       final response = await http
-          .get(
-            Uri.parse('$_baseUrl/v2/payouts/$payoutId'),
-            headers: _headers,
-          )
+          .get(Uri.parse('$_baseUrl/payouts/$payoutId'), headers: _headers)
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final d = data.containsKey('data')
-            ? data['data'] as Map<String, dynamic>
-            : data;
+        final decoded = jsonDecode(response.body);
+        final data = _extractFirst(decoded, fallbackId: payoutId, idField: 'payoutId');
         return PawaPayPayoutResult(
-          payoutId: d['payoutId'] as String? ?? payoutId,
-          status: d['status'] as String? ?? 'UNKNOWN',
-          created: d['created'] as String?,
-          failureReason: d['failureReason'] != null
-              ? (d['failureReason'] as Map<String, dynamic>)['failureMessage'] as String?
-              : null,
+          payoutId: data['payoutId'] as String? ?? payoutId,
+          status: data['status'] as String? ?? 'UNKNOWN',
+          created: data['created'] as String?,
+          failureReason: _failureMsg(data['failureReason']),
         );
       } else {
         throw PawaPayException('Payout status check failed (HTTP ${response.statusCode})');
@@ -310,10 +294,8 @@ class PawaPayService {
         final result = await checkPayoutStatus(payoutId);
         onStatusUpdate?.call(result.status);
         if (result.isFinal) return result;
-      } catch (e) {
-        if (AppConstants.enableLogging) {
-          debugPrint('PawaPay: Payout poll error (retrying): $e');
-        }
+      } catch (_) {
+        // transient error — keep polling
       }
     }
     throw PawaPayException('Payout timed out after ${timeout.inMinutes} minutes.');
@@ -323,7 +305,6 @@ class PawaPayService {
   // HELPERS
   // ============================================================================
 
-  /// Check if the API key is configured
   bool get isConfigured {
     const envKey = String.fromEnvironment('PAWAPAY_API_KEY', defaultValue: '');
     return envKey.isNotEmpty || AppConstants.pawaPayApiKey.isNotEmpty;
@@ -347,36 +328,26 @@ class PawaPayDepositResult {
     this.failureReason,
   });
 
-  bool get isAccepted => status == 'ACCEPTED';
+  bool get isAccepted  => status == 'ACCEPTED';
   bool get isCompleted => status == 'COMPLETED';
-  bool get isFailed => status == 'FAILED' || status == 'REJECTED';
+  bool get isFailed    => status == 'FAILED' || status == 'REJECTED';
   bool get isProcessing => status == 'ACCEPTED' || status == 'PROCESSING';
-  bool get isFinal => isCompleted || isFailed;
+  bool get isFinal     => isCompleted || isFailed;
 
   String get displayStatus {
     switch (status) {
-      case 'ACCEPTED':
-        return 'Waiting for confirmation...';
-      case 'PROCESSING':
-        return 'Processing payment...';
-      case 'COMPLETED':
-        return 'Payment successful!';
-      case 'FAILED':
-        return failureReason ?? 'Payment failed';
-      case 'REJECTED':
-        return failureReason ?? 'Payment rejected';
-      default:
-        return status;
+      case 'ACCEPTED':    return 'Waiting for confirmation...';
+      case 'PROCESSING':  return 'Processing payment...';
+      case 'COMPLETED':   return 'Payment successful!';
+      case 'FAILED':      return failureReason ?? 'Payment failed';
+      case 'REJECTED':    return failureReason ?? 'Payment rejected';
+      default:            return status;
     }
   }
 
   @override
   String toString() => 'PawaPayDeposit($depositId: $status)';
 }
-
-// ============================================================================
-// PAYOUT RESULT MODEL
-// ============================================================================
 
 class PawaPayPayoutResult {
   final String payoutId;
@@ -392,23 +363,17 @@ class PawaPayPayoutResult {
   });
 
   bool get isCompleted => status == 'COMPLETED';
-  bool get isFailed => status == 'FAILED' || status == 'REJECTED';
-  bool get isFinal => isCompleted || isFailed;
+  bool get isFailed    => status == 'FAILED' || status == 'REJECTED';
+  bool get isFinal     => isCompleted || isFailed;
 
   String get displayStatus {
     switch (status) {
-      case 'ACCEPTED':
-        return 'Payout accepted...';
-      case 'PROCESSING':
-        return 'Sending funds...';
-      case 'COMPLETED':
-        return 'Payout successful!';
-      case 'FAILED':
-        return failureReason ?? 'Payout failed';
-      case 'REJECTED':
-        return failureReason ?? 'Payout rejected';
-      default:
-        return status;
+      case 'ACCEPTED':    return 'Payout accepted...';
+      case 'PROCESSING':  return 'Sending funds...';
+      case 'COMPLETED':   return 'Payout successful!';
+      case 'FAILED':      return failureReason ?? 'Payout failed';
+      case 'REJECTED':    return failureReason ?? 'Payout rejected';
+      default:            return status;
     }
   }
 
@@ -416,13 +381,8 @@ class PawaPayPayoutResult {
   String toString() => 'PawaPayPayout($payoutId: $status)';
 }
 
-// ============================================================================
-// EXCEPTION
-// ============================================================================
-
 class PawaPayException implements Exception {
   final String message;
-
   PawaPayException(this.message);
 
   @override

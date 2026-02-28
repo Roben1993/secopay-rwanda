@@ -97,7 +97,7 @@ class HelpScreen extends StatelessWidget {
     _Topic('How do I recover my wallet?', 'Go to Settings → Security → Restore Wallet and enter your 12-word recovery phrase. Never share your recovery phrase with anyone.'),
     _Topic('Why is my KYC pending?', 'KYC verification usually takes 1–3 business days. Make sure your ID photo is clear and your selfie matches your ID.'),
     _Topic('How long does a P2P order take?', 'P2P orders typically complete in 15–30 minutes once the seller confirms payment. If the seller is unresponsive, you can open a dispute.'),
-    _Topic('What fees does ESCOPAY charge?', 'ESCOPAY charges a ${AppConstants.platformFeePercent}% platform fee on completed escrow transactions. Blockchain gas fees are paid separately.'),
+    _Topic('What fees does ESCOPAY charge?', 'ESCOPAY charges a 2% platform fee on completed escrow transactions. Blockchain gas fees are paid separately.'),
   ];
 }
 
@@ -245,7 +245,7 @@ class FaqScreen extends StatelessWidget {
     _Faq('How do I become a P2P merchant?', 'Go to P2P → Apply as Merchant. Submit your ID and business details. Approval takes 1-3 business days.'),
     _Faq('What currencies are supported?', 'We support USDT and USDC on the Polygon network. MATIC is used for gas fees. Rwanda Franc (RWF) is used for P2P fiat payments.'),
     _Faq('How do I recover my wallet?', 'Go to Security → Restore Wallet and enter your 12-word recovery phrase. Keep this phrase safe — it cannot be reset.'),
-    _Faq('What are the fees?', 'ESCOPAY charges ${AppConstants.platformFeePercent}% on completed escrow transactions. P2P trades have no platform fee. Polygon gas fees are typically under \$0.01.'),
+    _Faq('What are the fees?', 'ESCOPAY charges 2% on completed escrow transactions. P2P trades have no platform fee. Polygon gas fees are typically under \$0.01.'),
   ];
 }
 
@@ -315,7 +315,7 @@ class TermsScreen extends StatelessWidget {
             _buildSection('3. Escrow Services', 'ESCOPAY acts as a neutral third party in escrow transactions. Funds are held until both parties fulfill their obligations. ESCOPAY does not guarantee that counterparties will fulfill their obligations.'),
             _buildSection('4. KYC Verification', 'Certain features require identity verification. You agree to provide accurate information. False information may result in account suspension.'),
             _buildSection('5. Prohibited Activities', 'You may not use ESCOPAY for illegal activities, money laundering, fraud, or any activity that violates applicable laws. Violations will result in immediate account termination.'),
-            _buildSection('6. Fees', 'ESCOPAY charges a ${AppConstants.platformFeePercent}% fee on completed escrow transactions. Fees are non-refundable once a transaction is completed.'),
+            _buildSection('6. Fees', 'ESCOPAY charges a 2% fee on completed escrow transactions. Fees are non-refundable once a transaction is completed.'),
             _buildSection('7. Disputes', 'Disputes must be raised within 7 days of the transaction. ESCOPAY\'s admin decision on disputes is final.'),
             _buildSection('8. Cryptocurrency Risk', 'Cryptocurrency values are volatile. ESCOPAY is not responsible for losses due to market fluctuations. You use the platform at your own risk.'),
             _buildSection('9. Limitation of Liability', 'ESCOPAY is not liable for indirect, incidental, or consequential damages. Our total liability is limited to the transaction fees paid in the last 30 days.'),
