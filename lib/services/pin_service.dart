@@ -34,7 +34,7 @@ class PinService {
 
   /// Hash a PIN with salt using iterated SHA-256 (10,000 rounds)
   String _hashPin(String pin, String salt) {
-    var bytes = utf8.encode('$salt:$pin');
+    List<int> bytes = utf8.encode('$salt:$pin');
     // Stretch with 10,000 rounds to slow down brute-force attacks
     for (int i = 0; i < 10000; i++) {
       bytes = sha256.convert(bytes).bytes;
